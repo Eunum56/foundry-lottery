@@ -33,9 +33,7 @@ contract HelperConfig is ChainConstants, Script {
         networkConfigs[SPEOLIA_ETH_CHAIN_ID] = getSepoliaETHConfig();
     }
 
-    function getConfigByChainId(
-        uint256 chainId
-    ) public returns (NetworkConfig memory) {
+    function getConfigByChainId(uint256 chainId) public returns (NetworkConfig memory) {
         if (networkConfigs[chainId].vrfCoordinator != address(0)) {
             return networkConfigs[chainId];
         } else if (chainId == LOCAL_CHAIN_ID) {
@@ -46,15 +44,14 @@ contract HelperConfig is ChainConstants, Script {
     }
 
     function getSepoliaETHConfig() public pure returns (NetworkConfig memory) {
-        return
-            NetworkConfig({
-                entranceFee: 0.01 ether, // 10000000000000000 wei
-                interval: 30, // 30 seconds
-                vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
-                keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
-                callBackGasLimit: 500000, // 500,000
-                subscriptionId: 0
-            });
+        return NetworkConfig({
+            entranceFee: 0.01 ether, // 10000000000000000 wei
+            interval: 30, // 30 seconds
+            vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
+            keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
+            callBackGasLimit: 500000, // 500,000
+            subscriptionId: 0
+        });
     }
 
     function getLocalConfig() public returns (NetworkConfig memory) {
@@ -64,11 +61,8 @@ contract HelperConfig is ChainConstants, Script {
 
         // Deploy mock
         vm.startBroadcast();
-        VRFCoordinatorV2_5Mock vrfCoordinator = new VRFCoordinatorV2_5Mock(
-            MOCK_BASE_FEE,
-            MOCK_GAS_PRICE_LINK,
-            MOCK_WEI_PER_UINT_LINK
-        );
+        VRFCoordinatorV2_5Mock vrfCoordinator =
+            new VRFCoordinatorV2_5Mock(MOCK_BASE_FEE, MOCK_GAS_PRICE_LINK, MOCK_WEI_PER_UINT_LINK);
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
