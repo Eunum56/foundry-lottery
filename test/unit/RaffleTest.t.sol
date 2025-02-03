@@ -41,10 +41,7 @@ contract RaffleTest is Test {
     //* Enter Raffle function tests
 
     function testRaffleStateInitializeCorrectly() public view {
-        assertEq(
-            uint256(raffle.getRaffleState()),
-            uint256(Raffle.RaffleState.OPEN)
-        );
+        assertEq(uint256(raffle.getRaffleState()), uint256(Raffle.RaffleState.OPEN));
         // console.log(raffle.getRaffleState());
         // console.log(Raffle.RaffleState.OPEN);
     }

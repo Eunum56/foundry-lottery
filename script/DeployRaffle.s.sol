@@ -7,6 +7,7 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 
 contract DeployRaffle is Script {
     function run() external {}
+
     function deployContract() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
         // if on local network we get mocks and deploy the contract on local network(anvil)
