@@ -67,4 +67,17 @@ contract RaffleTest is Test {
 
         raffle.enterRaffle{value: entranceFee}();
     }
+
+    function testNotAllowPlayesToEnterRaffleWhenRaffleIsNotOpen() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1); // vm.warp is a cheatcode that adds or pass time in the blockchain
+        vm.roll(block.number + 2); // vm.roll is a cheatcode that adds or pass blocks in the blockchain
+        raffle.performUpkeep("");
+
+        // Act / Assert
+        vm.expectRevert(Raffle.Raffle__RaffleIsNotOpen.selector);
+        raffle.enterRaffle{value: entranceFee}();
+    }
 }
