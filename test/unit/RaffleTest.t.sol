@@ -154,9 +154,9 @@ contract RaffleTest is Test {
 
     function testPerformUpKeepRaffleStateEmitsRequestId() public enterRaffle {
         // Act
-        vm.recordLogs();
+        vm.recordLogs(); // vm.recordLogs is a cheatCode for recording logs that will emit in any function call
         raffle.performUpkeep("");
-        Vm.Log[] memory entries = vm.getRecordedLogs();
+        Vm.Log[] memory entries = vm.getRecordedLogs(); // Vm.Log will return array of different emit and vm.getRecordedLogs will give every recoreded logs!
         bytes32 requestId = entries[1].topics[1];
 
         // Assert
@@ -176,5 +176,49 @@ contract RaffleTest is Test {
             randomRequestId,
             address(raffle)
         );
+    }
+
+    function testfulFillRandomWrodsPicksAWinnerSendMoneyResetTheLottery()
+        public
+        enterRaffle
+    {
+        // Arrange
+        uint256 additionalPlayers = 3; // total 4
+        uint256 startingIndex = 1;
+        address expectedWinner = address(1);
+        for (
+            uint256 i = startingIndex;
+            i < startingIndex + additionalPlayers;
+            i++
+        ) {
+            address newPlayer = address(uint160(i));
+            hoax(newPlayer, 1 ether);
+            raffle.enterRaffle{value: entranceFee}();
+        }
+
+        uint256 startingTimeStamp = raffle.getLastTimeStamp();
+        uint256 winnerStartingBalance = expectedWinner.balance;
+
+        // Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(raffle)
+        );
+
+        // Assert
+        address recentWinner = raffle.getRecentWinner();
+        Raffle.RaffleState rState = raffle.getRaffleState();
+        uint256 winnerBalance = recentWinner.balance;
+        uint256 endingTimeStamp = raffle.getLastTimeStamp();
+        uint256 prize = entranceFee * (additionalPlayers + 1);
+
+        assert(recentWinner == expectedWinner);
+        assert(uint256(rState) == 0);
+        assert(winnerBalance == winnerStartingBalance + prize);
+        assert(endingTimeStamp > startingTimeStamp);
     }
 }
