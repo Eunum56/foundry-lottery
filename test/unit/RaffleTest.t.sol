@@ -5,6 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -22,6 +23,14 @@ contract RaffleTest is Test {
 
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_BALANCE = 10 ether; // 10e18
+
+    modifier enterRaffle() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _;
+    }
 
     function setUp() external {
         DeployRaffle deployRaffle = new DeployRaffle();
@@ -41,7 +50,10 @@ contract RaffleTest is Test {
     //* Enter Raffle function tests
 
     function testRaffleStateInitializeCorrectly() public view {
-        assertEq(uint256(raffle.getRaffleState()), uint256(Raffle.RaffleState.OPEN));
+        assertEq(
+            uint256(raffle.getRaffleState()),
+            uint256(Raffle.RaffleState.OPEN)
+        );
         // console.log(raffle.getRaffleState());
         // console.log(Raffle.RaffleState.OPEN);
     }
@@ -88,7 +100,7 @@ contract RaffleTest is Test {
         vm.roll(block.number + 1);
 
         // Act
-        (bool upKeepNeeded,) = raffle.checkUpKeep("");
+        (bool upKeepNeeded, ) = raffle.checkUpKeep("");
 
         // Asssert
         assert(!upKeepNeeded);
@@ -103,9 +115,52 @@ contract RaffleTest is Test {
         raffle.performUpkeep("");
 
         // Act
-        (bool upKeepNeeded,) = raffle.checkUpKeep("");
+        (bool upKeepNeeded, ) = raffle.checkUpKeep("");
 
         // Assert
         assert(!upKeepNeeded);
+    }
+
+    // Perform Up Keep tests
+
+    function testPerformUpKeepRevertsWhenUpKeepNotNeeded() public enterRaffle {
+        // Act/Assert
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpKeepRevertsWhenIfCheckUpKeepFalse() public {
+        // Arrage
+        uint256 currentBalance = 0;
+        uint256 numPlayers = 0;
+        Raffle.RaffleState rState = raffle.getRaffleState();
+
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        currentBalance += entranceFee;
+        numPlayers += 1;
+
+        // Act/Asert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__upKeepNotNeeded.selector,
+                currentBalance,
+                numPlayers,
+                rState
+            )
+        );
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpKeepRaffleStateEmitsRequestId() public enterRaffle {
+        // Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+
+        // Assert
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        assert(uint256(requestId) > 0);
+        assert(uint256(raffleState) == 1);
     }
 }
