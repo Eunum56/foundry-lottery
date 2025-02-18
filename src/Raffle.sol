@@ -1,5 +1,7 @@
 //SPDX-License-Identifier:MIT
 
+//* 0x4A006DCF76BbAb02a3c679D59d73257bCdc96a48
+
 pragma solidity ^0.8.24;
 
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
